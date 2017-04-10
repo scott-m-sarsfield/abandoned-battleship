@@ -1,6 +1,4 @@
-import * as ShipTypes from '../ShipTypes';
-import DirectionTypes from '../DirectionTypes';
-
+import {ShipTypes,DirectionTypes} from '../../constants';
 
 export default {
     [ShipTypes.AIRCRAFT_CARRIER] : {

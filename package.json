@@ -31,12 +31,14 @@
     "mocha-notifier-reporter": "^0.1.2",
     "reactify": "*",
     "require-dir": "^0.3.1",
+    "sinon": "^2.1.0",
     "vinyl-buffer": "*",
     "vinyl-source-stream": "*",
     "yargs": "^5.0.0"
   },
   "dependencies": {
     "jquery": "^3.1.0",
+    "map-obj": "^2.0.0",
     "react": "^15.3.1",
     "react-dom": "^15.3.1",
     "react-redux": "^5.0.3",

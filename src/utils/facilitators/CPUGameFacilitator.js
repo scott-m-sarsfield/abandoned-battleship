@@ -1,15 +1,15 @@
 // (Maybe going overboard on constants.)
-import * as HistoryTypes from '../HistoryTypes';
-import * as StateTypes from '../StateTypes';
-import ShipLengths from '../ShipLengths';
-import DirectionTypes from '../DirectionTypes';
 
-import MY_SHIPS from './ShipLayoutOne';
+import {HistoryTypes,StateTypes,ShipLengths,DirectionTypes} from '../../constants';
+
 
 import CPUOpponent from './CPUOpponent';
 
 
 import{matrix,objectValues} from '../Misc';
+const mapObj = require('map-obj');
+
+//window.EXPECT = require('chai').expect;
 
 
 
@@ -35,9 +35,9 @@ function CPUGameFacilitator({opponent,actions}){
     this.opponent = opponent || new CPUOpponent();
 
     this.gameState = StateTypes.NOT_STARTED;
-    this.playerShips = [];
+    this.playerShips = {};
     this.playerShots = [];
-    this.opponentShips = [];
+    this.opponentShips = {};
     this.opponentShots = [];
     this.history = [];
 
@@ -46,16 +46,40 @@ function CPUGameFacilitator({opponent,actions}){
         setGameState: ()=>{},
         ...actions
     };
-
-    // Bogus initialization.
-    function init(){
-        this.setShipPositions(MY_SHIPS);
-    }
-
-    init.call(this);
-
 }
 
+// -----------------------------------------------------------------------------
+// ACCESSORS
+
+CPUGameFacilitator.prototype.getState = function getState(){
+    return this.gameState;
+};
+
+CPUGameFacilitator.prototype.getPlayerShips = function getPlayerShips(){
+    return this.playerShips;
+};
+
+CPUGameFacilitator.prototype.getOpponentShips = function getOpponentShips(){
+    return mapObj(this.opponentShips,(key,value)=>{
+        const {type,alive} = value;
+        const o = {type,alive};
+
+        if(!alive) return [key,value];
+        else return [key,o];
+    });
+};
+
+CPUGameFacilitator.prototype.getPlayerShots = function getPlayerShots(){
+    return this.playerShots;
+};
+
+CPUGameFacilitator.prototype.getOpponentShots = function getOpponentShots(){
+    return this.opponentShots;
+};
+
+
+// -----------------------------------------------------------------------------
+// GRID CONSTRUCTION
 
 function getCells(origin,direction,length){
 
@@ -119,6 +143,9 @@ function constructShipGrid(ships){
 
     return grid;
 }
+
+// -----------------------------------------------------------------------------
+// CONSOLE GRID RENDERING
 
 function drawBoard(grid){
     // eslint-disable-next-line
@@ -185,11 +212,20 @@ CPUGameFacilitator.prototype.drawMyBoard = function drawMyBoard(){
     );
 };
 
-CPUGameFacilitator.prototype.setShipPositions = function setShipPositions(ships){
-    this.playerShips = ships;
-    this.opponentShips = this.opponent.getShips();
+function tackOnAliveStatus(ships){
+    return mapObj(ships,(key,value)=>{
+        return [key,{
+            ...value,
+            alive:true
+        }];
+    });
+}
 
-    this.grid =
+CPUGameFacilitator.prototype.setShipPositions = function setShipPositions(ships){
+    // benefit of doubt (for now)
+
+    this.playerShips = tackOnAliveStatus(ships);
+    this.opponentShips = tackOnAliveStatus(this.opponent.getShips());
 
     this.actions.addGameHistory([
         {type:HistoryTypes.GAME_STARTED}
@@ -199,10 +235,11 @@ CPUGameFacilitator.prototype.setShipPositions = function setShipPositions(ships)
     this.actions.setGameState(this.gameState);
 };
 
-function shipSunk(x,y){
-    let grid = constructGrid(this.opponentShips,this.playerShots);
+function shipSunk(x,y,ships,shots){
+
+    let grid = constructGrid(ships,shots);
     grid[x][y] = CellTypes.SHOT_HIT;
-    const shipAtCell = constructShipGrid(this.opponentShips)[x][y];
+    const shipAtCell = constructShipGrid(ships)[x][y];
     const shipCells = getCells(
         shipAtCell.origin,
         shipAtCell.direction,
@@ -216,6 +253,10 @@ function shipSunk(x,y){
 }
 
 CPUGameFacilitator.prototype.shootCell = function shootCell(x,y){
+    // Only can shoot when it is the players turn.
+    if(this.gameState !== StateTypes.YOUR_TURN) return false;
+
+
     let grid = constructGrid(this.opponentShips,this.playerShots);
 
     if(grid[x][y] === CellTypes.SHOT_HIT || grid[x][y] === CellTypes.SHOT_MISS) return false; // don't allow this.
@@ -231,9 +272,16 @@ CPUGameFacilitator.prototype.shootCell = function shootCell(x,y){
     ];
 
     if(hit){
-        let ship = shipSunk.call(this,x,y);
+        let ship = shipSunk(x,y,this.opponentShips,this.playerShots);
 
         if(ship){
+            // update ship status
+            this.opponentShips[ship.type] = {
+                ...ship,
+                alive: false
+            };
+
+            // add history item
             history.push({
                 type: HistoryTypes.SHIP_SUNK,
                 ship
