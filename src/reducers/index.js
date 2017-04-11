@@ -1,11 +1,9 @@
 import {combineReducers} from 'redux';
 
-import {shots} from './shots';
-import {ships} from './ships';
+import {game} from './game';
 
 const rootReducer = combineReducers({
-    ships,
-    shots
+    game
 });
 
 export default rootReducer;

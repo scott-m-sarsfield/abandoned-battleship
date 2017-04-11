@@ -106,9 +106,31 @@ describe('CPUGameFacilitator',function(){
                 expect(ships[ShipTypes.PATROL_BOAT].origin).to.exist;
                 expect(ships[ShipTypes.PATROL_BOAT].direction).to.exist;
             });
+            it("will record the shots I take",()=>{
+                game.shootCell(9,1);
+                const shots = game.getPlayerShots();
+                expect(shots).to.include({x:9,y:1});
+            });
+            it("will reflect an opponent's shot as well as mine",()=>{
+                game.shootCell(9,1);
+                const my_shots = game.getPlayerShots();
+                const their_shots = game.getOpponentShots();
+                expect(my_shots).to.have.lengthOf(1);
+                expect(their_shots).to.have.lengthOf(1);
+            });
+
+            it("will indicate game over when all the opponent ships are sunk",()=>{
+                let i;
+                for(i = 0; i <= 4; i++){
+                    game.shootCell(i+4,0);
+                    game.shootCell(i+1,1);
+                    game.shootCell(9,i);
+                    game.shootCell(0,i);
+                    game.shootCell(0,i+5);
+                }
+                expect(game.getState()).to.equal(StateTypes.GAME_OVER);
+            });
         });
-
-
 
 
     });

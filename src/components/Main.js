@@ -6,9 +6,18 @@ import Board from './game/Board';
 
 class Main extends React.Component{
 
+    constructor(props){
+        super(props);
+
+        props.actions.startGame();
+    }
+
     static get propTypes(){
         return {
-            something: React.PropTypes.number
+            playerShips: React.PropTypes.object,
+            playerShots: React.PropTypes.array,
+            opponentShips: React.PropTypes.object,
+            opponentShots: React.PropTypes.array
         };
     }
 
@@ -16,13 +25,18 @@ class Main extends React.Component{
         window.alert("I was clicked.");
     }
 
+    handleShoot(x,y){
+        this.props.actions.shootCell(x,y);
+    }
+
     render(){
+        const {playerShips,opponentShips,playerShots,opponentShots} = this.props;
         return (
             <div>
                 <div>Opponent</div>
-                <Board ships={this.props.ships.opponentShips} shots={this.props.shots.playerShots} />
+                <Board ships={opponentShips} shots={playerShots} onShoot={this.handleShoot.bind(this)}/>
                 <div>You</div>
-                <Board ships={this.props.ships.playerShips} shots={this.props.shots.opponentShots} />
+                <Board ships={playerShips} shots={opponentShots} />
             </div>
         );
     }
@@ -32,8 +46,10 @@ import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import * as actions from '../actions';
 const mapStateToProps = state => ({
-    shots:state.shots,
-    ships:state.ships
+    playerShips: state.game.playerShips,
+    playerShots: state.game.playerShots,
+    opponentShips: state.game.opponentShips,
+    opponentShots: state.game.opponentShots
 });
 
 const mapDispatchToProps = dispatch => ({

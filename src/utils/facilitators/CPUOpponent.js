@@ -9,7 +9,17 @@ import {ShipTypes,DirectionTypes} from '../../constants';
 */
 function CPUOpponent(){
     this.ships = [];
+    this.shotCount = 0;
 }
+
+CPUOpponent.prototype.getShot = function getShot(){
+    const shot = {
+        x: this.shotCount % 10,
+        y: Math.floor(this.shotCount / 10)
+    };
+    this.shotCount++;
+    return shot;
+};
 
 CPUOpponent.prototype.getShips = function getShips(){
     return {

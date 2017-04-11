@@ -31,7 +31,7 @@ const WIDTH = 10, HEIGHT = 10;
 ██      ██   ██  ██████ ██ ███████ ██    ██    ██   ██    ██     ██████  ██   ██
 */
 
-function CPUGameFacilitator({opponent,actions}){
+function CPUGameFacilitator({opponent,actions}={}){
     this.opponent = opponent || new CPUOpponent();
 
     this.gameState = StateTypes.NOT_STARTED;
@@ -61,8 +61,8 @@ CPUGameFacilitator.prototype.getPlayerShips = function getPlayerShips(){
 
 CPUGameFacilitator.prototype.getOpponentShips = function getOpponentShips(){
     return mapObj(this.opponentShips,(key,value)=>{
-        const {type,alive} = value;
-        const o = {type,alive};
+        const {type,alive,length} = value;
+        const o = {type,alive,length};
 
         if(!alive) return [key,value];
         else return [key,o];
@@ -216,7 +216,8 @@ function tackOnAliveStatus(ships){
     return mapObj(ships,(key,value)=>{
         return [key,{
             ...value,
-            alive:true
+            alive:true,
+            length:ShipLengths[key]
         }];
     });
 }
@@ -252,53 +253,108 @@ function shipSunk(x,y,ships,shots){
     return null;
 }
 
-CPUGameFacilitator.prototype.shootCell = function shootCell(x,y){
-    // Only can shoot when it is the players turn.
-    if(this.gameState !== StateTypes.YOUR_TURN) return false;
+function updateShipShots({x,y,ships,shots,player,history}){
+    let grid = constructGrid(ships,shots);
 
-
-    let grid = constructGrid(this.opponentShips,this.playerShots);
-
-    if(grid[x][y] === CellTypes.SHOT_HIT || grid[x][y] === CellTypes.SHOT_MISS) return false; // don't allow this.
+    if(grid[x][y] === CellTypes.SHOT_HIT || grid[x][y] === CellTypes.SHOT_MISS){
+        throw "Invalid shot";
+    }
 
     let hit = (grid[x][y] === CellTypes.SHIP);
 
-    let history = [
-        {
-            type: ( hit ? HistoryTypes.SHOT_HIT : HistoryTypes.SHOT_MISS ),
-            x,
-            y
-        }
-    ];
+    history.push({
+        type: ( hit ? HistoryTypes.SHOT_HIT : HistoryTypes.SHOT_MISS ),
+        x,
+        y,
+        player
+    });
 
+    let ship = null, sunkAll = false;
     if(hit){
-        let ship = shipSunk(x,y,this.opponentShips,this.playerShots);
+        ship = shipSunk(x,y,ships,shots);
+    }
 
-        if(ship){
-            // update ship status
-            this.opponentShips[ship.type] = {
-                ...ship,
-                alive: false
-            };
+    if(ship){
+        // update ship status
+        ships[ship.type] = {
+            ...ship,
+            alive: false
+        };
 
-            // add history item
-            history.push({
-                type: HistoryTypes.SHIP_SUNK,
-                ship
-            });
+        // add history item
+        history.push({
+            type: HistoryTypes.SHIP_SUNK,
+            ship,
+            player
+        });
+
+        // check if all ships are sunk
+        if(Object.keys(ships).every(ship=>!ships[ship].alive)){
+            sunkAll = true;
         }
     }
 
-    this.actions.addGameHistory(history);
-
-    this.playerShots.push({
+    shots.push({
         x,
         y
     });
 
-    this.gameState = StateTypes.YOUR_TURN;
-    this.actions.setGameState(this.gameState);
+    if(sunkAll){
+        history.push({
+            type: HistoryTypes.GAME_OVER,
+            player:player
+        });
+    }
 
+    return sunkAll; // game over?
+}
+
+function opponentShootCell({history}){
+    const shot = this.opponent.getShot();
+    const {x,y} = shot;
+
+    let ships = this.playerShips;
+    let shots = this.opponentShots;
+    let player = 'OPPONENT';
+
+    return updateShipShots({
+        x,
+        y,
+        ships,
+        shots,
+        player,
+        history
+    });
+}
+
+CPUGameFacilitator.prototype.shootCell = function shootCell(x,y){
+    // Only can shoot when it is the players turn.
+    if(this.gameState !== StateTypes.YOUR_TURN) return false;
+
+    let ships = this.opponentShips;
+    let shots = this.playerShots;
+    let player = 'PLAYER';
+    let history = [];
+
+    let gameOver = updateShipShots.call(this,{
+        x,
+        y,
+        ships,
+        shots,
+        player,
+        history
+    });
+
+    if(!gameOver){
+        gameOver = opponentShootCell.call(this,{
+            history
+        });
+    }
+
+    this.actions.addGameHistory(history);
+
+    this.gameState = (!gameOver) ? StateTypes.YOUR_TURN : StateTypes.GAME_OVER;
+    this.actions.setGameState(this.gameState);
 
     return true;
 };

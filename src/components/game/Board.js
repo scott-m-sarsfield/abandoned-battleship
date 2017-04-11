@@ -1,5 +1,7 @@
 import React from 'react';
 
+import {DirectionTypes} from '../../constants';
+
 const GRID_WIDTH = 10,
 GRID_HEIGHT= 10;
 
@@ -17,6 +19,13 @@ const Z_GRID_LAYER = 1,
 Z_SHIP_LAYER = 2,
 Z_PIN_LAYER = 3,
 Z_CLICK_LAYER = 4;
+/*
+██████  ██ ███    ██
+██   ██ ██ ████   ██
+██████  ██ ██ ██  ██
+██      ██ ██  ██ ██
+██      ██ ██   ████
+*/
 
 class PinLayer extends React.Component{
     render(){
@@ -27,6 +36,13 @@ class PinLayer extends React.Component{
         );
     }
 }
+/*
+███████ ██   ██ ██ ██████
+██      ██   ██ ██ ██   ██
+███████ ███████ ██ ██████
+     ██ ██   ██ ██ ██
+███████ ██   ██ ██ ██
+*/
 
 class ShipLayer extends React.Component{
 
@@ -39,6 +55,18 @@ class ShipLayer extends React.Component{
         };
     }
 
+    static get propTypes(){
+        return {
+            ships: React.PropTypes.object
+        };
+    }
+
+    static get defaultProps(){
+        return {
+            ships: {}
+        };
+    }
+
     componentDidMount(){
         //console.log(this.refs.container.offsetWidth,this.refs.container.offsetHeight);
         this.setState({
@@ -47,31 +75,57 @@ class ShipLayer extends React.Component{
         });
     }
 
-    render(){
-
+    renderPiece({x,y,h,w}){
         const scale = this.state.height / 10;
         const padding = 2;
 
-        function renderPiece(x,y,h,w){
-            return (
-                <div style={{
-                    position:'absolute',
-                    top:(y*scale+padding)+'px',
-                    height:(h*scale-2*padding)+'px',
-                    width:(w*scale-2*padding)+'px',
-                    left:(x*scale+padding)+'px',
-                    background:'#ccc'
-                }} />
-            );
-        }
+        return (
+            <div style={{
+                position:'absolute',
+                top:(y*scale+padding)+'px',
+                height:(h*scale-2*padding)+'px',
+                width:(w*scale-2*padding)+'px',
+                left:(x*scale+padding)+'px',
+                background:'#ccc'
+            }} />
+        );
+    }
 
+    render(){
+        const {ships} = this.props;
+
+        const Ship = this.renderPiece.bind(this);
+
+        const _ships = Object.keys(ships).filter(key=>{
+            return ships[key].origin; // must have coordinates
+        }).map(key=>{
+            const ship = ships[key];
+            const x = (ship.direction === DirectionTypes.LEFT) ? (ship.origin.x - (ship.length-1)) : ship.origin.x;
+            const y = (ship.direction === DirectionTypes.UP) ? (ship.origin.y - (ship.length-1)) : ship.origin.y;
+            const h = (ship.direction === DirectionTypes.UP || ship.direction === DirectionTypes.DOWN) ? ship.length : 1;
+            const w = (ship.direction === DirectionTypes.LEFT || ship.direction === DirectionTypes.RIGHT) ? ship.length : 1;
+
+            //console.log(x,y,h,w);
+            return (
+                <Ship key={key} x={x} y={y} h={h} w={w} />
+            );
+        });
+
+        //console.log(this.props);
         return (
             <div style={{...styles.absoluteFill, zIndex:Z_SHIP_LAYER}} ref="container">
-            {renderPiece(1,1,1,3)}
+            {_ships}
             </div>
         );
     }
 }
+/*
+ ██████ ██      ██  ██████ ██   ██
+██      ██      ██ ██      ██  ██
+██      ██      ██ ██      █████
+██      ██      ██ ██      ██  ██
+ ██████ ███████ ██  ██████ ██   ██
+*/
 
 class ClickLayer extends React.Component{
 
@@ -85,6 +139,17 @@ class ClickLayer extends React.Component{
         this.handleClick = this.handleClick.bind(this);
     }
 
+    static get propTypes(){
+        return {
+            onClickCell: React.PropTypes.func
+        };
+    }
+
+    static get defaultProps(){
+        return {
+            onClickCell: function(){}
+        };
+    }
 
     renderCell(props){
         const {row,col} = props;
@@ -104,7 +169,8 @@ class ClickLayer extends React.Component{
     }
 
     handleClick(e){
-        console.log(e.target.dataset);
+        const dataset = e.target.dataset;
+        this.props.onClickCell(parseInt(dataset.row),parseInt(dataset.col));
     }
 
     renderTable(){
@@ -134,6 +200,13 @@ class ClickLayer extends React.Component{
     }
 }
 
+/*
+ ██████  ██████  ██ ██████
+██       ██   ██ ██ ██   ██
+██   ███ ██████  ██ ██   ██
+██    ██ ██   ██ ██ ██   ██
+ ██████  ██   ██ ██ ██████
+*/
 
 class GridLayer extends React.Component{
 
@@ -187,16 +260,39 @@ class GridLayer extends React.Component{
             );
         }
 }
+/*
+██████   ██████   █████  ██████  ██████
+██   ██ ██    ██ ██   ██ ██   ██ ██   ██
+██████  ██    ██ ███████ ██████  ██   ██
+██   ██ ██    ██ ██   ██ ██   ██ ██   ██
+██████   ██████  ██   ██ ██   ██ ██████
+*/
 
 class Board extends React.Component{
+
+    static get propTypes(){
+        return {
+            ships: React.PropTypes.object,
+            shots: React.PropTypes.array,
+            onShoot: React.PropTypes.func
+        };
+    }
+
+    static get defaultProps(){
+        return {
+            onShoot: function(){}
+        };
+    }
+
     render(){
+        const {ships,shots,onShoot} = this.props;
 
         return (
             <div style={{position:'relative',height:'300px',width:'300px',background:'#468'}}>
-                <ShipLayer />
-                <PinLayer />
+                <ShipLayer ships={ships}/>
+                <PinLayer pins={shots}/>
                 <GridLayer />
-                <ClickLayer />
+                <ClickLayer onClickCell={onShoot}/>
             </div>
         );
     }
