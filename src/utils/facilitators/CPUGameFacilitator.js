@@ -296,7 +296,8 @@ function updateShipShots({x,y,ships,shots,player,history}){
 
     shots.push({
         x,
-        y
+        y,
+        hit
     });
 
     if(sunkAll){
