@@ -82,27 +82,71 @@ class Board extends React.Component{
         };
     }
 
+    renderColumnLabels(){
+        return (
+            <div style={{display:'table',width:'100%',textAlign:'center',boxSizing:'border-box',borderCollapse:'collapse'}}>
+                {Array(10).fill(null).map((v,i)=>(
+                    <div key={i} style={{display:'table-cell',border:'solid white',borderWidth:'0px 1px',lineHeight:'20px',fontFamily:'monospace'}}>
+                        {String.fromCharCode(i+"A".charCodeAt(0))}
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    renderRowLabels(){
+        return (
+            <div style={{display:'table',textAlign:'center',boxSizing:'border-box',borderCollapse:'collapse',height:'100%',width:'100%'}}>
+                {Array(10).fill(null).map((v,i)=>(
+                    <div key={i} style={{display:'table-row'}}>
+                        <div style={{display:'table-cell',border:'solid white',borderWidth:'1px 0px',verticalAlign:'middle',fontFamily:'monospace'}}>
+                            {i+1}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
     render(){
         const {ships,shots,onShoot} = this.props;
 
         return (
-            <div style={{position:'relative',height:'300px',width:'300px',background:'#468'}}>
+            <div style={{height:'340px',width:'340px'}}>
+                <div style={{height:'20px',background:'#aaa',padding:'0 20px'}}>
+                    {this.renderColumnLabels()}
+                </div>
 
-                <BoardLayer zIndex={Z_SHIP_LAYER}>
-                    <ShipLayer ships={ships}/>
-                </BoardLayer>
+                <div style={{height:'300px',width:'20px',background:'#aaa',display:'inline-block'}}>
+                    {this.renderRowLabels()}
+                </div>
 
-                <BoardLayer zIndex={Z_PIN_LAYER}>
-                    <PinLayer pins={shots}/>
-                </BoardLayer>
+                <div style={{position:'relative',height:'300px',width:'300px',background:'#468',display:'inline-block'}}>
 
-                <BoardLayer zIndex={Z_GRID_LAYER}>
-                    <GridLayer height={10} width={10}/>
-                </BoardLayer>
+                    <BoardLayer zIndex={Z_SHIP_LAYER}>
+                        <ShipLayer ships={ships}/>
+                    </BoardLayer>
 
-                <BoardLayer zIndex={Z_CLICK_LAYER}>
-                    <ClickLayer height={10} width={10} onClickCell={onShoot}/>
-                </BoardLayer>
+                    <BoardLayer zIndex={Z_PIN_LAYER}>
+                        <PinLayer pins={shots}/>
+                    </BoardLayer>
+
+                    <BoardLayer zIndex={Z_GRID_LAYER}>
+                        <GridLayer height={10} width={10}/>
+                    </BoardLayer>
+
+                    <BoardLayer zIndex={Z_CLICK_LAYER}>
+                        <ClickLayer height={10} width={10} onClickCell={onShoot}/>
+                    </BoardLayer>
+                </div>
+
+                <div style={{height:'300px',width:'20px',background:'#aaa',display:'inline-block'}}>
+                    {this.renderRowLabels()}
+                </div>
+
+                <div style={{height:'20px',background:'#aaa',marginTop:'-4px',padding:'0 20px'}}>
+                    {this.renderColumnLabels()}
+                </div>
 
             </div>
         );
