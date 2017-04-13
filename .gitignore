@@ -49,3 +49,4 @@ Temporary Items
 node_modules/**
 __old/**
 dist/**
+dist/js/app.js
