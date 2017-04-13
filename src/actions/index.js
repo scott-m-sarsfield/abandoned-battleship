@@ -3,6 +3,16 @@ import * as types from '../constants/ActionTypes';
 import CPUGameFacilitator from '../utils/facilitators/CPUGameFacilitator';
 import MY_SHIPS from '../utils/facilitators/ShipLayoutOne';
 
+function updateGameStateFromFacilitator(dispatch,facilitator){
+    dispatch(({
+        type: types.UPDATE_GAME_STATE,
+        state: facilitator.getState(),
+        playerShips: facilitator.getPlayerShips(),
+        opponentShips: facilitator.getOpponentShips(),
+        playerShots: facilitator.getPlayerShots(),
+        opponentShots: facilitator.getOpponentShots()
+    }));
+}
 
 export const startGame = () => {
     return (dispatch) => {
@@ -31,12 +41,16 @@ export const startGame = () => {
             type: types.START_GAME,
             facilitator: game
         });
+        updateGameStateFromFacilitator(dispatch,game);
     };
 };
 
 export const shootCell = (x,y) => {
     return (dispatch,getStore) => {
         const store = getStore();
-        store.game.facilitator.shootCell(x,y);
+        const facilitator = store.game.facilitator;
+        facilitator.shootCell(x,y);
+
+        updateGameStateFromFacilitator(dispatch,facilitator);
     };
 };

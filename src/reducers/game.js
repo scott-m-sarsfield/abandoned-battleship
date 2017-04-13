@@ -1,5 +1,6 @@
 import {
-    START_GAME
+    START_GAME,
+    UPDATE_GAME_STATE
 } from '../constants/ActionTypes';
 
 
@@ -15,29 +16,23 @@ export function game(state=initialState,action){
         case START_GAME:
             facilitator = action.facilitator;
             return {
-                facilitator,
+                ...state,
+                facilitator
+            };
 
-                state: facilitator.getState(),
-                playerShips: facilitator.getPlayerShips(),
-                opponentShips: facilitator.getOpponentShips(),
-                playerShots: facilitator.getPlayerShots(),
-                opponentShots: facilitator.getOpponentShots()
+        case UPDATE_GAME_STATE:
+            return {
+                ...state,
+                state: action.state,
+                playerShips: action.playerShips,
+                opponentShips: action.opponentShips,
+                playerShots: action.playerShots,
+                opponentShots: action.opponentShots,
             };
 
         default:
             break;
     }
 
-    // don't go any further w/o facilitator
-    if(!state.facilitator) return state;
-
-    return {
-        ...state,
-
-        state: state.facilitator.getState(),
-        playerShips: state.facilitator.getPlayerShips(),
-        opponentShips: state.facilitator.getOpponentShips(),
-        playerShots: state.facilitator.getPlayerShots(),
-        opponentShots: state.facilitator.getOpponentShots()
-    };
+    return state;
 }
