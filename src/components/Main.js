@@ -3,6 +3,7 @@
 var React = require('react');
 
 import Board from './game/Board';
+import ShipStatusPanel from './game/ShipStatusPanel';
 
 class Main extends React.Component{
 
@@ -35,8 +36,11 @@ class Main extends React.Component{
             <div>
                 <div>Opponent</div>
                 <Board ships={opponentShips} shots={playerShots} onShoot={this.handleShoot.bind(this)}/>
+                <ShipStatusPanel ships={opponentShips} />
+
                 <div>You</div>
                 <Board ships={playerShips} shots={opponentShots} />
+                <ShipStatusPanel ships={playerShips} />
             </div>
         );
     }
