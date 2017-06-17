@@ -14,6 +14,8 @@ function updateGameStateFromFacilitator(dispatch,facilitator){
     }));
 }
 
+export const reportGameEvent = (evt) => ({type:types.REPORT_GAME_EVENT, event: evt});
+
 export const startGame = () => {
     return (dispatch) => {
 
@@ -21,18 +23,22 @@ export const startGame = () => {
             actions:{
                 addGameHistory: arr=>{
                     arr.forEach(i=>{
-                        // eslint-disable-next-line
-                        console.log(i);
+                        dispatch(reportGameEvent(i));
                     });
                 },
                 setGameState:()=>{
                     //eslint-disable-next-line
-                    if(window.GAME) window.GAME.drawOpponentBoard();
+                    try{
+                        if(window.GAME) window.GAME.drawOpponentBoard();
+                    }catch(e){/*nothing*/}
                 }
             }
         });
 
-        window.GAME = game;
+        try{
+            window.GAME = game;
+        }catch(e){/*nothing*/}
+
 
         game.setShipPositions(MY_SHIPS);
 

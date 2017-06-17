@@ -11,7 +11,7 @@ gulp.task('renderStatic',function(){
     // this is probably dumb.
     Object.keys(require.cache).forEach(function(key) {
          if(!key.match(/node_modules/)){    // only want to delete the require cache for my files.
-             console.log(key);
+             //console.log(key);
              delete require.cache[key];
          }
      });

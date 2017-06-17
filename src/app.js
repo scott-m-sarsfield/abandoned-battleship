@@ -6,6 +6,7 @@ import store from './store';
 
 import Main from './components/Main';
 
+
 window.onload = ()=>{
     ReactDOM.render(
         (
